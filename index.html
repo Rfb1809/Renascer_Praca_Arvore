@@ -1,811 +1,1934 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Controle de Frequência e Unção - Igreja</title>
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js via CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Ícones Lucide -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f8fafc;
-    }
-    .tab-active {
-      border-bottom: 2px solid #2563eb;
-      color: #2563eb;
-      font-weight: 600;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RE - Controle de Presença e Frequência</title>
+    <!-- Favicon SVG com o Logo Oficial RE -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%231849C6'/%3E%3Cpath fill='%23FFFFFF' d='M21 31h16.5c6.8 0 11.5 4.2 11.5 10.6 0 4.8-2.6 8.3-6.8 9.7L49.5 69h-8.2l-6.2-16.5H28.5V69H21V31zm7.5 6.4v9.2h8.2c3.2 0 5.1-1.7 5.1-4.6s-1.9-4.6-5.1-4.6h-8.2z'/%3E%3Crect x='54' y='31' width='24' height='6.8' fill='%23FFFFFF'/%3E%3Crect x='54' y='46.6' width='24' height='6.8' fill='%23FFFFFF'/%3E%3Crect x='54' y='62.2' width='24' height='6.8' fill='%23FFFFFF'/%3E%3C/svg%3E">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef4ff',
+                            100: '#d9e6ff',
+                            200: '#bcd4ff',
+                            300: '#8eb8ff',
+                            400: '#5991ff',
+                            500: '#2f68f6',
+                            600: '#1849C6', // Cor Azul Principal do Logo
+                            700: '#143ba3',
+                            800: '#153385',
+                            900: '#162d6b',
+                            950: '#0f1d45',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
-<body class="text-slate-800 antialiased">
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
-  <!-- Cabeçalho -->
-  <header class="bg-slate-900 text-white shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-      <div class="flex items-center gap-3">
-        <div class="bg-blue-600 p-2 rounded-lg">
-          <i data-lucide="church" class="w-6 h-6 text-white"></i>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold tracking-tight">Controle de Frequência por Culto</h1>
-          <p class="text-xs text-slate-400">Gestão de Membros, Unção e Ministérios</p>
-        </div>
-      </div>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-      <!-- Botões de Backup / Exportação -->
-      <div class="flex flex-wrap items-center gap-2">
-        <button onclick="exportarCSV()" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition">
-          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-          Exportar Excel (CSV)
-        </button>
-        <button onclick="exportarJSON()" class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium px-3 py-2 rounded-lg transition">
-          <i data-lucide="download" class="w-4 h-4"></i>
-          Backup JSON
-        </button>
-        <label class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium px-3 py-2 rounded-lg transition cursor-pointer">
-          <i data-lucide="upload" class="w-4 h-4"></i>
-          Restaurar
-          <input type="file" id="importFile" accept=".json" class="hidden" onchange="importarJSON(event)" />
-        </label>
-      </div>
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-brand-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 transform transition-all">
+            <div class="flex items-center gap-3 text-amber-600 mb-3">
+                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <h3 id="confirm-title" class="text-lg font-bold text-slate-900">Confirmar Ação</h3>
+            </div>
+            <p id="confirm-message" class="text-slate-600 text-sm mb-6 leading-relaxed">Tem certeza que deseja prosseguir?</p>
+            <div class="flex justify-end gap-3">
+                <button id="confirm-cancel-btn" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium text-sm hover:bg-slate-50 transition">
+                    Cancelar
+                </button>
+                <button id="confirm-ok-btn" class="px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium text-sm hover:bg-red-700 shadow-sm transition">
+                    Confirmar
+                </button>
+            </div>
+        </div>
     </div>
-  </header>
 
-  <!-- Navegação Principal -->
-  <div class="bg-white border-b border-slate-200 sticky top-0 z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-6">
-      <button id="btn-tab-registro" onclick="mudarAba('registro')" class="py-3.5 text-sm flex items-center gap-2 tab-active transition">
-        <i data-lucide="user-plus" class="w-4 h-4"></i>
-        Lançamento & Lista de Presença
-      </button>
-      <button id="btn-tab-graficos" onclick="mudarAba('graficos')" class="py-3.5 text-sm flex items-center gap-2 text-slate-500 hover:text-slate-800 transition">
-        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
-        Gráficos & Relatórios
-      </button>
+    <!-- Edit Record Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-brand-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                <h3 class="text-lg font-bold text-brand-900 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-brand-600"></i> Editar Registro de Presença
+                </h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="edit-form" class="space-y-4">
+                <input type="hidden" id="edit-id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Data do Culto *</label>
+                        <input type="date" id="edit-date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Culto / Horário *</label>
+                        <select id="edit-service" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm bg-white">
+                            <!-- Preenchido via JS com a grade oficial -->
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nome Completo *</label>
+                    <input type="text" id="edit-name" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Unção / Cargo *</label>
+                        <select id="edit-anointing" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm bg-white">
+                            <option value="Bispo">Bispo</option>
+                            <option value="Pastor">Pastor</option>
+                            <option value="Presbítero">Presbítero</option>
+                            <option value="Diácono">Diácono</option>
+                            <option value="Aspirante">Aspirante</option>
+                            <option value="Oficial">Oficial</option>
+                            <option value="Membro">Membro</option>
+                            <option value="Visitante">Visitante</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Ministério *</label>
+                        <input type="text" id="edit-ministry" list="ministries-list" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium text-sm hover:bg-slate-50 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 shadow-sm transition">
+                        Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-    <!-- ABA 1: REGISTRO E LISTAGEM -->
-    <section id="aba-registro" class="space-y-6">
-
-      <!-- Cards de Resumo por Unção -->
-      <div id="cards-uncao" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        <!-- Preenchido dinamicamente via JS -->
-      </div>
-
-      <!-- Formulário de Lançamento -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
-            <i data-lucide="clipboard-check" class="w-5 h-5 text-blue-600"></i>
-            Registrar Presença no Culto
-          </h2>
-          <span class="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-            Data e Culto ficam fixos para facilitar o lançamento em lote
-          </span>
-        </div>
-
-        <form id="form-presenca" onsubmit="adicionarRegistro(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
-          <!-- Data do Culto -->
-          <div class="lg:col-span-2">
-            <label class="block text-xs font-medium text-slate-600 mb-1">Data do Culto *</label>
-            <input type="date" id="input-data" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-
-          <!-- Tipo de Culto -->
-          <div class="lg:col-span-2">
-            <label class="block text-xs font-medium text-slate-600 mb-1">Culto / Reunião *</label>
-            <select id="input-culto" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="Culto de Domingo (Noite)">Domingo (Noite)</option>
-              <option value="Culto de Domingo (Manhã)">Domingo (Manhã)</option>
-              <option value="Culto de Ensino">Culto de Ensino</option>
-              <option value="Culto de Oração">Culto de Oração</option>
-              <option value="Culto de Jovens">Culto de Jovens</option>
-              <option value="Santa Ceia">Santa Ceia</option>
-              <option value="Evento Especial">Evento Especial</option>
-            </select>
-          </div>
-
-          <!-- Nome da Pessoa -->
-          <div class="lg:col-span-3">
-            <label class="block text-xs font-medium text-slate-600 mb-1">Nome Completo *</label>
-            <input type="text" id="input-nome" list="lista-nomes-salvos" placeholder="Ex: João da Silva" required autocomplete="off"
-              onchange="autocompletarDadosPessoa(this.value)"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <datalist id="lista-nomes-salvos"></datalist>
-          </div>
-
-          <!-- Unção -->
-          <div class="lg:col-span-2">
-            <label class="block text-xs font-medium text-slate-600 mb-1">Unção / Cargo *</label>
-            <select id="input-uncao" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="Membro">Membro</option>
-              <option value="Bispo">Bispo</option>
-              <option value="Pastor">Pastor</option>
-              <option value="Presbítero">Presbítero</option>
-              <option value="Diácono">Diácono</option>
-              <option value="Aspirante">Aspirante</option>
-              <option value="Oficial">Oficial</option>
-              <option value="Visitante">Visitante</option>
-            </select>
-          </div>
-
-          <!-- Ministério -->
-          <div class="lg:col-span-2">
-            <label class="block text-xs font-medium text-slate-600 mb-1">Ministério *</label>
-            <input type="text" id="input-ministerio" list="lista-ministerios" placeholder="Ex: Louvor" required
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <datalist id="lista-ministerios">
-              <option value="Geral / Sem Ministério">
-              <option value="Louvor e Adoração">
-              <option value="Infantil (Kids)">
-              <option value="Jovens">
-              <option value="Casais">
-              <option value="Intercessão">
-              <option value="Recepção / Diaconato">
-              <option value="Mídia e Som">
-              <option value="Evangelismo e Missões">
-              <option value="Ensino / EBD">
-            </datalist>
-          </div>
-
-          <!-- Botão Adicionar -->
-          <div class="lg:col-span-1 flex items-end">
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm flex items-center justify-center gap-1 transition shadow-sm">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              Salvar
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Filtros e Tabela de Registros -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <!-- Barra de Filtros -->
-        <div class="p-4 bg-slate-50 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-          <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">Filtrar por Data</label>
-            <input type="date" id="filtro-data" onchange="renderizarTudo()" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">Filtrar por Unção</label>
-            <select id="filtro-uncao" onchange="renderizarTudo()" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white">
-              <option value="">Todas as Unções</option>
-              <option value="Bispo">Bispo</option>
-              <option value="Pastor">Pastor</option>
-              <option value="Presbítero">Presbítero</option>
-              <option value="Diácono">Diácono</option>
-              <option value="Aspirante">Aspirante</option>
-              <option value="Oficial">Oficial</option>
-              <option value="Membro">Membro</option>
-              <option value="Visitante">Visitante</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">Filtrar por Ministério</label>
-            <input type="text" id="filtro-ministerio" oninput="renderizarTudo()" placeholder="Digite o ministério..." class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">Buscar Pessoa</label>
-            <input type="text" id="filtro-nome" oninput="renderizarTudo()" placeholder="Nome..." class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white" />
-          </div>
-          <div class="flex gap-2">
-            <button onclick="limparFiltros()" class="w-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-medium py-1.5 px-3 rounded-lg text-sm transition">
-              Limpar Filtros
-            </button>
-          </div>
-        </div>
-
-        <!-- Cabeçalho da Tabela -->
-        <div class="px-5 py-3 border-b border-slate-200 flex justify-between items-center">
-          <span class="text-sm font-semibold text-slate-700">
-            Registros Encontrados: <span id="contador-filtrado" class="text-blue-600">0</span>
-          </span>
-          <button onclick="limparTodosDados()" class="text-xs text-red-500 hover:text-red-700 hover:underline">
-            Apagar todos os dados
-          </button>
-        </div>
-
-        <!-- Tabela -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
-                <th class="py-3 px-4 font-semibold">Data</th>
-                <th class="py-3 px-4 font-semibold">Culto</th>
-                <th class="py-3 px-4 font-semibold">Nome</th>
-                <th class="py-3 px-4 font-semibold">Unção</th>
-                <th class="py-3 px-4 font-semibold">Ministério</th>
-                <th class="py-3 px-4 font-semibold text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabela-registros" class="divide-y divide-slate-100 text-sm">
-              <!-- Linhas inseridas via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ABA 2: GRÁFICOS E RELATÓRIOS -->
-    <section id="aba-graficos" class="hidden space-y-6">
-
-      <!-- KPIs Gerais -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <p class="text-xs font-medium text-slate-500 uppercase">Total de Presenças Registradas</p>
-          <p id="kpi-total-presencas" class="text-3xl font-bold text-slate-800 mt-1">0</p>
-        </div>
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <p class="text-xs font-medium text-slate-500 uppercase">Total de Cultos Realizados</p>
-          <p id="kpi-total-cultos" class="text-3xl font-bold text-blue-600 mt-1">0</p>
-        </div>
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <p class="text-xs font-medium text-slate-500 uppercase">Média de Pessoas por Culto</p>
-          <p id="kpi-media-culto" class="text-3xl font-bold text-emerald-600 mt-1">0</p>
-        </div>
-      </div>
-
-      <!-- Gráfico Principal: Frequência Temporal (Dia, Semana, Mês, Ano) -->
-      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div>
-            <h3 class="text-lg font-bold text-slate-800">Evolução de Frequência</h3>
-            <p class="text-xs text-slate-500">Quantidade de pessoas presentes agrupadas por período</p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2">
-            <!-- Seletor de Período -->
-            <div class="inline-flex rounded-lg bg-slate-100 p-1">
-              <button onclick="alterarPeriodoGrafico('dia')" id="btn-periodo-dia" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-blue-600 shadow-sm transition">Por Dia</button>
-              <button onclick="alterarPeriodoGrafico('semana')" id="btn-periodo-semana" class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:text-slate-900 transition">Por Semana</button>
-              <button onclick="alterarPeriodoGrafico('mes')" id="btn-periodo-mes" class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:text-slate-900 transition">Por Mês</button>
-              <button onclick="alterarPeriodoGrafico('ano')" id="btn-periodo-ano" class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:text-slate-900 transition">Por Ano</button>
+    <!-- ========================================== -->
+    <!-- TELA DE LOGIN                              -->
+    <!-- ========================================== -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-900 via-brand-700 to-brand-600 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 sm:p-10 border border-white/20">
+            <div class="flex flex-col items-center text-center mb-8">
+                <!-- Logo Circular Azul Oficial RE -->
+                <div class="w-24 h-24 rounded-full shadow-lg shadow-brand-600/30 mb-4 flex items-center justify-center overflow-hidden ring-4 ring-brand-50">
+                    <svg viewBox="0 0 100 100" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="50" fill="#1849C6"/>
+                        <!-- Letra R -->
+                        <path fill="#FFFFFF" d="M21 31h16.5c6.8 0 11.5 4.2 11.5 10.6 0 4.8-2.6 8.3-6.8 9.7L49.5 69h-8.2l-6.2-16.5H28.5V69H21V31zm7.5 6.4v9.2h8.2c3.2 0 5.1-1.7 5.1-4.6s-1.9-4.6-5.1-4.6h-8.2z"/>
+                        <!-- Três barras formando o E -->
+                        <rect x="54" y="31" width="24" height="6.8" fill="#FFFFFF"/>
+                        <rect x="54" y="46.6" width="24" height="6.8" fill="#FFFFFF"/>
+                        <rect x="54" y="62.2" width="24" height="6.8" fill="#FFFFFF"/>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Acesso ao Sistema</h1>
+                <p class="text-sm text-slate-500 mt-1">Controle de Presença & Frequência de Cultos</p>
             </div>
 
-            <!-- Filtro de Unção no Gráfico -->
-            <select id="grafico-filtro-uncao" onchange="atualizarGraficos()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs bg-white font-medium">
-              <option value="TODOS">Todas as Unções</option>
-              <option value="Bispo">Apenas Bispos</option>
-              <option value="Pastor">Apenas Pastores</option>
-              <option value="Presbítero">Apenas Presbíteros</option>
-              <option value="Diácono">Apenas Diáconos</option>
-              <option value="Aspirante">Apenas Aspirantes</option>
-              <option value="Oficial">Apenas Oficiais</option>
-              <option value="Membro">Apenas Membros</option>
-              <option value="Visitante">Apenas Visitantes</option>
-            </select>
-          </div>
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label for="login-username" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Usuário
+                    </label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="login-username" required autocomplete="username" placeholder="Digite seu usuário"
+                            class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="login-password" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Senha
+                    </label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Digite sua senha"
+                            class="w-full pl-11 pr-11 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm transition">
+                        <button type="button" onclick="toggleLoginPassword()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600 p-1">
+                            <i id="login-eye-icon" class="fa-solid fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="login-error-msg" class="hidden text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Usuário ou senha incorretos.</span>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-brand-600/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Entrar no Sistema</span>
+                </button>
+            </form>
+
+            <!-- Dica discreta do acesso inicial -->
+            <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+                <p class="text-xs text-slate-400">
+                    Primeiro acesso padrão: <span class="font-semibold text-slate-600">admin</span> &bull; Senha: <span class="font-semibold text-slate-600">1234</span>
+                </p>
+            </div>
         </div>
+    </div>
 
-        <div class="relative h-80 w-full">
-          <canvas id="chart-temporal"></canvas>
-        </div>
-      </div>
+    <!-- ========================================== -->
+    <!-- APLICAÇÃO PRINCIPAL (PROTEGIDA POR LOGIN)  -->
+    <!-- ========================================== -->
+    <div id="app-shell" class="hidden flex-1 flex flex-col">
 
-      <!-- Gráficos Secundários: Por Unção e Por Ministério -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Por Unção -->
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="text-base font-bold text-slate-800 mb-1">Distribuição por Unção</h3>
-          <p class="text-xs text-slate-500 mb-4">Total acumulado por cargo ministerial</p>
-          <div class="relative h-72 w-full">
-            <canvas id="chart-uncao"></canvas>
-          </div>
-        </div>
+        <!-- Header -->
+        <header class="bg-brand-600 text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <!-- Logo + Título -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3.5">
+                            <!-- Logo Circular Branco/Azul no Header -->
+                            <div class="w-12 h-12 rounded-full bg-white p-0.5 shadow-md shrink-0 flex items-center justify-center">
+                                <svg viewBox="0 0 100 100" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="50" r="50" fill="#1849C6"/>
+                                    <path fill="#FFFFFF" d="M21 31h16.5c6.8 0 11.5 4.2 11.5 10.6 0 4.8-2.6 8.3-6.8 9.7L49.5 69h-8.2l-6.2-16.5H28.5V69H21V31zm7.5 6.4v9.2h8.2c3.2 0 5.1-1.7 5.1-4.6s-1.9-4.6-5.1-4.6h-8.2z"/>
+                                    <rect x="54" y="31" width="24" height="6.8" fill="#FFFFFF"/>
+                                    <rect x="54" y="46.6" width="24" height="6.8" fill="#FFFFFF"/>
+                                    <rect x="54" y="62.2" width="24" height="6.8" fill="#FFFFFF"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">Secretaria & Frequência</h1>
+                                <p class="text-xs text-brand-100">Controle de Presença por Culto, Unção e Ministério</p>
+                            </div>
+                        </div>
 
-        <!-- Por Ministério -->
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="text-base font-bold text-slate-800 mb-1">Participação por Ministério</h3>
-          <p class="text-xs text-slate-500 mb-4">Presenças registradas em cada departamento</p>
-          <div class="relative h-72 w-full">
-            <canvas id="chart-ministerio"></canvas>
-          </div>
-        </div>
-      </div>
+                        <!-- Usuário & Logout Mobile -->
+                        <div class="flex lg:hidden items-center gap-2">
+                            <button onclick="logout()" title="Sair do sistema" class="px-3 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-right-from-bracket"></i> Sair
+                            </button>
+                        </div>
+                    </div>
 
-    </section>
+                    <!-- Navigation Tabs + User Info Desktop -->
+                    <div class="flex flex-wrap items-center justify-between lg:justify-end gap-3">
+                        <nav class="flex flex-wrap bg-brand-700/80 p-1 rounded-xl border border-brand-500/40">
+                            <button id="tab-btn-lancamento" onclick="switchTab('lancamento')" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-brand-600 shadow-sm">
+                                <i class="fa-solid fa-clipboard-user"></i>
+                                <span>Lançamento & Lista</span>
+                            </button>
+                            <button id="tab-btn-graficos" onclick="switchTab('graficos')" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-brand-100 hover:text-white">
+                                <i class="fa-solid fa-chart-column"></i>
+                                <span>Gráficos & Relatórios</span>
+                            </button>
+                            <button id="tab-btn-usuarios" onclick="switchTab('usuarios')" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-brand-100 hover:text-white">
+                                <i class="fa-solid fa-users-gear"></i>
+                                <span>Usuários & Acesso</span>
+                            </button>
+                        </nav>
 
-  </main>
+                        <!-- User Badge & Logout Desktop -->
+                        <div class="hidden lg:flex items-center gap-2.5 pl-2 border-l border-brand-500/50">
+                            <div class="text-right">
+                                <p id="header-user-name" class="text-xs font-bold text-white leading-tight">Administrador</p>
+                                <p id="header-user-role" class="text-[11px] text-brand-200 leading-tight">Administrador</p>
+                            </div>
+                            <button onclick="logout()" title="Sair do sistema" class="px-3 py-2 rounded-xl bg-brand-800 hover:bg-brand-900 text-white text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                <span>Sair</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-  <script>
-    // ==========================================
-    // ESTADO E CONFIGURAÇÕES INICIAIS
-    // ==========================================
-    const STORAGE_KEY = 'igreja_controle_presenca_v1';
-    const UNCOES_ORDEM = ['Bispo', 'Pastor', 'Presbítero', 'Diácono', 'Aspirante', 'Oficial', 'Membro', 'Visitante'];
-    const CORES_UNCAO = {
-      'Bispo': '#7c3aed',
-      'Pastor': '#2563eb',
-      'Presbítero': '#0284c7',
-      'Diácono': '#0d9488',
-      'Aspirante': '#16a34a',
-      'Oficial': '#ca8a04',
-      'Membro': '#475569',
-      'Visitante': '#e11d48'
-    };
+        <!-- Main Content -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    let registros = [];
-    let periodoAtual = 'dia';
-    let chartTemporal = null;
-    let chartUncao = null;
-    let chartMinisterio = null;
+            <!-- KPI Summary Cards (Visível nas abas de Lançamento e Gráficos) -->
+            <section id="kpi-section" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                <!-- Total Geral -->
+                <div class="col-span-2 sm:col-span-4 lg:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Presenças (Filtro)</p>
+                        <p id="kpi-total" class="text-3xl font-extrabold text-brand-600 mt-1">0</p>
+                        <p id="kpi-avg" class="text-xs text-slate-500 mt-0.5">Média: 0 por culto</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                </div>
 
-    // Inicialização ao carregar a página
-    document.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      definirDataHoje();
-      carregarDados();
-      renderizarTudo();
-    });
+                <!-- Unções Breakdown Mini-Cards (Clicáveis para filtrar rápido) -->
+                <div onclick="quickFilterAnointing('Bispo')" title="Clique para filtrar Bispos" class="cursor-pointer hover:border-brand-400 transition bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md self-start">Bispo</span>
+                    <span id="kpi-Bispo" class="text-2xl font-bold text-slate-800 mt-2">0</span>
+                </div>
+                <div onclick="quickFilterAnointing('Pastor')" title="Clique para filtrar Pastores" class="cursor-pointer hover:border-brand-400 transition bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md self-start">Pastor</span>
+                    <span id="kpi-Pastor" class="text-2xl font-bold text-slate-800 mt-2">0</span>
+                </div>
+                <div onclick="quickFilterAnointing('Presbítero')" title="Clique para filtrar Presbíteros" class="cursor-pointer hover:border-brand-400 transition bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md self-start">Presbítero</span>
+                    <span id="kpi-Presbítero" class="text-2xl font-bold text-slate-800 mt-2">0</span>
+                </div>
+                <div onclick="quickFilterAnointing('Diácono')" title="Clique para filtrar Diáconos" class="cursor-pointer hover:border-brand-400 transition bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md self-start">Diácono</span>
+                    <span id="kpi-Diácono" class="text-2xl font-bold text-slate-800 mt-2">0</span>
+                </div>
+                <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md self-start">Aspirante / Ofic.</span>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span id="kpi-Aspirante-Oficial" class="text-2xl font-bold text-slate-800">0</span>
+                        <span id="kpi-Aspirante-Oficial-detail" class="text-[11px] text-slate-400">(0A / 0O)</span>
+                    </div>
+                </div>
+                <div onclick="quickFilterAnointing('Membro')" title="Clique para filtrar Membros" class="cursor-pointer hover:border-brand-400 transition bg-white rounded-2xl p-3 shadow-sm border border-slate-200/80 flex flex-col justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md self-start">Membro / Vis.</span>
+                    <div class="flex items-baseline gap-2 mt-2">
+                        <span id="kpi-Membro-Total" class="text-2xl font-bold text-slate-800">0</span>
+                        <span id="kpi-Membro-detail" class="text-[11px] text-slate-400">(0M / 0V)</span>
+                    </div>
+                </div>
+            </section>
 
-    function definirDataHoje() {
-      const hoje = new Date().toISOString().split('T')[0];
-      document.getElementById('input-data').value = hoje;
-    }
+            <!-- ========================================== -->
+            <!-- TAB 1: LANÇAMENTO & LISTA                  -->
+            <!-- ========================================== -->
+            <div id="view-lancamento" class="space-y-6">
+                
+                <!-- Registration Form Card -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                    <div class="bg-brand-50/70 px-6 py-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-user-plus"></i>
+                            </span>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900">Registrar Presença no Culto</h2>
+                                <p class="text-xs text-slate-500">Horário sugerido automaticamente conforme o dia da semana selecionado.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="loadSampleDataPrompt()" class="text-xs px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-wand-magic-sparkles text-brand-600"></i> Carregar Exemplos
+                            </button>
+                        </div>
+                    </div>
 
-    // ==========================================
-    // ARMAZENAMENTO (LOCALSTORAGE)
-    // ==========================================
-    function carregarDados() {
-      const salvos = localStorage.getItem(STORAGE_KEY);
-      if (salvos) {
-        registros = JSON.parse(salvos);
-      } else {
-        // Dados de exemplo iniciais para visualização imediata
-        const hoje = new Date();
-        const d1 = new Date(hoje); d1.setDate(hoje.getDate() - 14);
-        const d2 = new Date(hoje); d2.setDate(hoje.getDate() - 7);
-        const f = (dt) => dt.toISOString().split('T')[0];
+                    <form id="attendance-form" class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+                            <!-- Data do Culto -->
+                            <div class="lg:col-span-2">
+                                <label for="input-date" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Data do Culto <span class="text-red-500">*</span>
+                                </label>
+                                <input type="date" id="input-date" required onchange="suggestServiceByDate(this.value)"
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm transition">
+                            </div>
 
-        registros = [
-          { id: 1, data: f(d1), culto: 'Culto de Domingo (Noite)', nome: 'Pr. Carlos Alberto', uncao: 'Pastor', ministerio: 'Geral / Sem Ministério' },
-          { id: 2, data: f(d1), culto: 'Culto de Domingo (Noite)', nome: 'Pb. Marcos Vinícius', uncao: 'Presbítero', ministerio: 'Ensino / EBD' },
-          { id: 3, data: f(d1), culto: 'Culto de Domingo (Noite)', nome: 'Dc. Roberto Silva', uncao: 'Diácono', ministerio: 'Recepção / Diaconato' },
-          { id: 4, data: f(d1), culto: 'Culto de Domingo (Noite)', nome: 'Ana Paula Souza', uncao: 'Membro', ministerio: 'Louvor e Adoração' },
-          { id: 5, data: f(d2), culto: 'Culto de Domingo (Noite)', nome: 'Bp. Antônio Ferreira', uncao: 'Bispo', ministerio: 'Geral / Sem Ministério' },
-          { id: 6, data: f(d2), culto: 'Culto de Domingo (Noite)', nome: 'Asp. Lucas Mendes', uncao: 'Aspirante', ministerio: 'Jovens' },
-          { id: 7, data: f(d2), culto: 'Culto de Domingo (Noite)', nome: 'Of. Juliana Costa', uncao: 'Oficial', ministerio: 'Infantil (Kids)' },
-          { id: 8, data: f(hoje), culto: 'Culto de Domingo (Noite)', nome: 'Pr. Carlos Alberto', uncao: 'Pastor', ministerio: 'Geral / Sem Ministério' },
-          { id: 9, data: f(hoje), culto: 'Culto de Domingo (Noite)', nome: 'Mariana Oliveira', uncao: 'Membro', ministerio: 'Mídia e Som' }
+                            <!-- Grade Oficial de Cultos e Horários -->
+                            <div class="lg:col-span-3">
+                                <label for="input-service" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Culto / Horário <span class="text-red-500">*</span>
+                                </label>
+                                <select id="input-service" required
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm transition">
+                                    <optgroup label="Domingo">
+                                        <option value="Domingo - 08h">Domingo - 08h</option>
+                                        <option value="Domingo - 10h">Domingo - 10h</option>
+                                        <option value="Domingo - 16h">Domingo - 16h</option>
+                                        <option value="Domingo - 18h">Domingo - 18h</option>
+                                    </optgroup>
+                                    <optgroup label="Segunda a Sexta (20h)">
+                                        <option value="Segunda-feira - 20h">Segunda-feira - 20h</option>
+                                        <option value="Terça-feira - 20h">Terça-feira - 20h</option>
+                                        <option value="Quarta-feira - 20h">Quarta-feira - 20h</option>
+                                        <option value="Quinta-feira - 20h">Quinta-feira - 20h</option>
+                                        <option value="Sexta-feira - 20h">Sexta-feira - 20h</option>
+                                    </optgroup>
+                                    <optgroup label="Sábado">
+                                        <option value="Sábado - Evento">Sábado - Evento</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <!-- Nome da Pessoa -->
+                            <div class="lg:col-span-3">
+                                <label for="input-name" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Nome da Pessoa <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="text" id="input-name" list="names-list" placeholder="Digite o nome completo..." required autocomplete="off"
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm transition">
+                                    <datalist id="names-list"></datalist>
+                                </div>
+                            </div>
+
+                            <!-- Unção / Cargo -->
+                            <div class="lg:col-span-2">
+                                <label for="input-anointing" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Unção <span class="text-red-500">*</span>
+                                </label>
+                                <select id="input-anointing" required
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm transition">
+                                    <option value="Membro" selected>Membro</option>
+                                    <option value="Bispo">Bispo</option>
+                                    <option value="Pastor">Pastor</option>
+                                    <option value="Presbítero">Presbítero</option>
+                                    <option value="Diácono">Diácono</option>
+                                    <option value="Aspirante">Aspirante</option>
+                                    <option value="Oficial">Oficial</option>
+                                    <option value="Visitante">Visitante</option>
+                                </select>
+                            </div>
+
+                            <!-- Ministério -->
+                            <div class="lg:col-span-2">
+                                <label for="input-ministry" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Ministério <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="input-ministry" list="ministries-list" value="Geral / Sem Ministério" placeholder="Selecione ou digite..." required
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm transition">
+                                <datalist id="ministries-list">
+                                    <option value="Geral / Sem Ministério">
+                                    <option value="Louvor">
+                                    <option value="Infantil">
+                                    <option value="Jovens">
+                                    <option value="Casais">
+                                    <option value="Intercessão">
+                                    <option value="Diaconia">
+                                    <option value="Recepção">
+                                    <option value="Mídia e Som">
+                                    <option value="Ensino / EBD">
+                                    <option value="Evangelismo">
+                                    <option value="Ação Social">
+                                </datalist>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex justify-end">
+                            <button type="submit"
+                                class="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white font-semibold text-sm shadow-md shadow-brand-600/20 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Registrar Presença</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Filters & Attendance Table Card -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                    <!-- Filter Bar -->
+                    <div class="p-5 border-b border-slate-200/80 bg-slate-50/50 space-y-4">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-brand-600"></i>
+                                Lista de Presenças Registradas
+                                <span id="records-count-badge" class="ml-1 text-xs font-semibold bg-brand-100 text-brand-700 px-2.5 py-0.5 rounded-full">0</span>
+                            </h3>
+
+                            <!-- Data Actions (Export / Backup / Clear) -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button onclick="exportToCSV()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-file-csv"></i> Exportar Excel/CSV
+                                </button>
+                                <button onclick="exportBackupJSON()" class="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-download"></i> Backup JSON
+                                </button>
+                                <label class="px-3 py-1.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-upload text-brand-600"></i> Restaurar JSON
+                                    <input type="file" id="import-json-input" accept=".json" class="hidden" onchange="importBackupJSON(event)">
+                                </label>
+                                <button onclick="clearAllDataPrompt()" class="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-trash-can"></i> Limpar Tudo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Filter Inputs -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            <!-- Busca por Nome -->
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="filter-search" placeholder="Buscar por nome..." oninput="applyFilters()"
+                                    class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+
+                            <!-- Filtro por Data -->
+                            <div class="flex items-center gap-1.5">
+                                <input type="date" id="filter-date" onchange="applyFilters()" title="Filtrar por data específica"
+                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                                <button onclick="clearDateFilter()" title="Mostrar todas as datas" class="p-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-500 text-xs shrink-0">
+                                    Todas
+                                </button>
+                            </div>
+
+                            <!-- Filtro por Culto -->
+                            <div>
+                                <select id="filter-service" onchange="applyFilters()"
+                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                                    <option value="">Todos os Cultos</option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro por Unção -->
+                            <div>
+                                <select id="filter-anointing" onchange="applyFilters()"
+                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                                    <option value="">Todas as Unções</option>
+                                    <option value="Bispo">Bispo</option>
+                                    <option value="Pastor">Pastor</option>
+                                    <option value="Presbítero">Presbítero</option>
+                                    <option value="Diácono">Diácono</option>
+                                    <option value="Aspirante">Aspirante</option>
+                                    <option value="Oficial">Oficial</option>
+                                    <option value="Membro">Membro</option>
+                                    <option value="Visitante">Visitante</option>
+                                </select>
+                            </div>
+
+                            <!-- Filtro por Ministério -->
+                            <div>
+                                <select id="filter-ministry" onchange="applyFilters()"
+                                    class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                                    <option value="">Todos os Ministérios</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Responsive Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    <th class="py-3.5 px-5">Data</th>
+                                    <th class="py-3.5 px-4">Culto / Horário</th>
+                                    <th class="py-3.5 px-4">Nome</th>
+                                    <th class="py-3.5 px-4">Unção</th>
+                                    <th class="py-3.5 px-4">Ministério</th>
+                                    <th class="py-3.5 px-5 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-table-body" class="divide-y divide-slate-100 text-sm">
+                                <!-- Rows injected dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="empty-state" class="hidden py-12 px-4 text-center">
+                        <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-2xl">
+                            <i class="fa-regular fa-folder-open"></i>
+                        </div>
+                        <h4 class="text-base font-semibold text-slate-700">Nenhum registro encontrado</h4>
+                        <p class="text-sm text-slate-500 mt-1 max-w-md mx-auto">Adicione pessoas no formulário acima, limpe os filtros atuais ou clique em "Carregar Exemplos" para visualizar dados de demonstração.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 2: GRÁFICOS & RELATÓRIOS               -->
+            <!-- ========================================== -->
+            <div id="view-graficos" class="hidden space-y-6">
+                
+                <!-- Main Temporal Chart Card -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-brand-600"></i>
+                                Evolução de Frequência nos Cultos
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Acompanhe a quantidade total de pessoas presentes agrupada por período.</p>
+                        </div>
+
+                        <!-- Period Selector Pills -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                                <button onclick="setChartPeriod('day')" id="period-btn-day" class="period-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-brand-600 text-white shadow-sm">
+                                    Por Dia
+                                </button>
+                                <button onclick="setChartPeriod('week')" id="period-btn-week" class="period-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-brand-600">
+                                    Por Semana
+                                </button>
+                                <button onclick="setChartPeriod('month')" id="period-btn-month" class="period-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-brand-600">
+                                    Por Mês
+                                </button>
+                                <button onclick="setChartPeriod('year')" id="period-btn-year" class="period-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-brand-600">
+                                    Por Ano
+                                </button>
+                            </div>
+
+                            <!-- Chart Type Toggle (Bar / Line) -->
+                            <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                                <button onclick="setChartType('bar')" id="type-btn-bar" title="Gráfico de Barras" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-brand-600 shadow-sm">
+                                    <i class="fa-solid fa-chart-simple"></i>
+                                </button>
+                                <button onclick="setChartType('line')" id="type-btn-line" title="Gráfico de Linha" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-brand-600">
+                                    <i class="fa-solid fa-chart-area"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter by Anointing inside Analytics -->
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 bg-brand-50/60 p-3 rounded-xl border border-brand-100">
+                        <div class="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                            <i class="fa-solid fa-filter text-brand-600"></i>
+                            <span>Filtrar gráficos por Unção:</span>
+                        </div>
+                        <select id="chart-anointing-filter" onchange="updateAllCharts()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="ALL">Todas as Unções (Geral)</option>
+                            <option value="Bispo">Somente Bispos</option>
+                            <option value="Pastor">Somente Pastores</option>
+                            <option value="Presbítero">Somente Presbíteros</option>
+                            <option value="Diácono">Somente Diáconos</option>
+                            <option value="Aspirante">Somente Aspirantes</option>
+                            <option value="Oficial">Somente Oficiais</option>
+                            <option value="Membro">Somente Membros</option>
+                            <option value="Visitante">Somente Visitantes</option>
+                        </select>
+                    </div>
+
+                    <!-- Main Temporal Canvas -->
+                    <div class="relative h-80 sm:h-96 w-full mt-6">
+                        <canvas id="temporalChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Secondary Charts Grid: Anointing & Ministry -->
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Distribution by Anointing -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+                        <div class="mb-4">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-crown text-brand-600"></i>
+                                Distribuição por Unção / Cargo
+                            </h3>
+                            <p class="text-xs text-slate-500">Proporção de presença entre Bispos, Pastores, Presbíteros, Diáconos, Aspirantes, Oficiais e Membros.</p>
+                        </div>
+                        <div class="relative h-72 w-full flex items-center justify-center">
+                            <canvas id="anointingChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Distribution by Ministry -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+                        <div class="mb-4">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-hands-praying text-brand-600"></i>
+                                Frequência por Ministério
+                            </h3>
+                            <p class="text-xs text-slate-500">Participação acumulada de cada ministério nos cultos registrados.</p>
+                        </div>
+                        <div class="relative h-72 w-full">
+                            <canvas id="ministryChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 3: USUÁRIOS & ACESSO                   -->
+            <!-- ========================================== -->
+            <div id="view-usuarios" class="hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Formulário de Novo Usuário -->
+                    <section class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden self-start">
+                        <div class="bg-brand-50/70 px-6 py-4 border-b border-slate-200/80 flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </span>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900">Criar Novo Usuário</h2>
+                                <p class="text-xs text-slate-500">Cadastre logins e senhas para a equipe da secretaria.</p>
+                            </div>
+                        </div>
+
+                        <form id="user-form" class="p-6 space-y-4">
+                            <div>
+                                <label for="new-user-fullname" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Nome Completo <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="new-user-fullname" required placeholder="Ex: Diác. Anderson Souza"
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm">
+                            </div>
+
+                            <div>
+                                <label for="new-user-username" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Login / Usuário <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="new-user-username" required placeholder="Ex: anderson"
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm">
+                            </div>
+
+                            <div>
+                                <label for="new-user-password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Senha de Acesso <span class="text-red-500">*</span>
+                                </label>
+                                <input type="password" id="new-user-password" required minlength="4" placeholder="Mínimo 4 caracteres"
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm">
+                            </div>
+
+                            <div>
+                                <label for="new-user-role" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Perfil de Acesso <span class="text-red-500">*</span>
+                                </label>
+                                <select id="new-user-role" required
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-brand-600 focus:border-brand-600 outline-none text-sm">
+                                    <option value="Operador">Operador (Lançamento e Relatórios)</option>
+                                    <option value="Administrador">Administrador (Acesso Total)</option>
+                                </select>
+                            </div>
+
+                            <button type="submit"
+                                class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-600/20 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-user-plus"></i>
+                                <span>Cadastrar Usuário</span>
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- Lista de Usuários Cadastrados -->
+                    <section class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/60 flex items-center justify-between">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-id-badge text-brand-600"></i>
+                                Usuários com Acesso ao Sistema
+                                <span id="users-count-badge" class="ml-1 text-xs font-semibold bg-brand-100 text-brand-700 px-2.5 py-0.5 rounded-full">1</span>
+                            </h3>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        <th class="py-3.5 px-5">Nome</th>
+                                        <th class="py-3.5 px-4">Usuário</th>
+                                        <th class="py-3.5 px-4">Perfil</th>
+                                        <th class="py-3.5 px-5 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Usuários injetados via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+                <p>Sistema de Controle de Frequência Eclesiástica &bull; Dados salvos localmente no navegador.</p>
+                <p id="storage-status" class="flex items-center gap-1.5 text-brand-600 font-semibold">
+                    <i class="fa-solid fa-circle-check"></i> Sincronizado localmente
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script>
+        // ==========================================
+        // STATE & CONFIGURATION
+        // ==========================================
+        const STORAGE_KEY = 'igreja_controle_presenca_v2';
+        const USERS_STORAGE_KEY = 'igreja_usuarios_v1';
+        const SESSION_STORAGE_KEY = 'igreja_sessao_ativa_v1';
+
+        let attendanceRecords = [];
+        let systemUsers = [];
+        let currentUser = null;
+        let currentTab = 'lancamento';
+        let chartPeriod = 'day'; // 'day' | 'week' | 'month' | 'year'
+        let chartType = 'bar';   // 'bar' | 'line'
+
+        // Chart.js instances
+        let temporalChartInstance = null;
+        let anointingChartInstance = null;
+        let ministryChartInstance = null;
+
+        // Grade Oficial de Cultos e Horários
+        const SERVICE_SCHEDULE_OPTIONS = [
+            'Domingo - 08h',
+            'Domingo - 10h',
+            'Domingo - 16h',
+            'Domingo - 18h',
+            'Segunda-feira - 20h',
+            'Terça-feira - 20h',
+            'Quarta-feira - 20h',
+            'Quinta-feira - 20h',
+            'Sexta-feira - 20h',
+            'Sábado - Evento'
         ];
-        salvarDados();
-      }
-    }
 
-    function salvarDados() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
-      atualizarDatalistPessoas();
-    }
+        // Color palette for Anointings (Unções)
+        const ANOINTING_STYLES = {
+            'Bispo':      { badge: 'bg-purple-100 text-purple-800 border-purple-200', color: '#7e22ce' },
+            'Pastor':     { badge: 'bg-brand-100 text-brand-800 border-brand-200',    color: '#1849C6' },
+            'Presbítero': { badge: 'bg-sky-100 text-sky-800 border-sky-200',          color: '#0284c7' },
+            'Diácono':    { badge: 'bg-teal-100 text-teal-800 border-teal-200',       color: '#0f766e' },
+            'Aspirante':  { badge: 'bg-amber-100 text-amber-800 border-amber-200',    color: '#b45309' },
+            'Oficial':    { badge: 'bg-orange-100 text-orange-800 border-orange-200', color: '#c2410c' },
+            'Membro':     { badge: 'bg-emerald-100 text-emerald-800 border-emerald-200', color: '#047857' },
+            'Visitante':  { badge: 'bg-slate-100 text-slate-700 border-slate-200',    color: '#475569' }
+        };
 
-    // ==========================================
-    // CRUD DE PRESENÇA
-    // ==========================================
-    function adicionarRegistro(event) {
-      event.preventDefault();
+        const ANOINTING_ORDER = ['Bispo', 'Pastor', 'Presbítero', 'Diácono', 'Aspirante', 'Oficial', 'Membro', 'Visitante'];
 
-      const data = document.getElementById('input-data').value;
-      const culto = document.getElementById('input-culto').value;
-      const nome = document.getElementById('input-nome').value.trim();
-      const uncao = document.getElementById('input-uncao').value;
-      const ministerio = document.getElementById('input-ministerio').value.trim() || 'Geral / Sem Ministério';
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+            checkSession();
 
-      if (!data || !nome) return;
+            // Set default date to today & auto-suggest service
+            const today = getLocalTodayISO();
+            document.getElementById('input-date').value = today;
+            suggestServiceByDate(today);
 
-      const novoRegistro = {
-        id: Date.now(),
-        data,
-        culto,
-        nome,
-        uncao,
-        ministerio
-      };
+            // Populate edit modal select with official schedule
+            const editServiceSelect = document.getElementById('edit-service');
+            editServiceSelect.innerHTML = SERVICE_SCHEDULE_OPTIONS.map(s => `<option value="${s}">${s}</option>`).join('');
 
-      registros.unshift(novoRegistro);
-      salvarDados();
-      renderizarTudo();
+            // Load attendance records
+            loadFromStorage();
 
-      // Limpa apenas o nome para agilizar o próximo lançamento
-      const inputNome = document.getElementById('input-nome');
-      inputNome.value = '';
-      inputNome.focus();
-    }
+            // Event Listeners
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('attendance-form').addEventListener('submit', handleAddRecord);
+            document.getElementById('edit-form').addEventListener('submit', handleSaveEdit);
+            document.getElementById('user-form').addEventListener('submit', handleAddUser);
+            document.getElementById('input-name').addEventListener('input', handleNameAutoFill);
 
-    function removerRegistro(id) {
-      if (confirm('Deseja remover este registro de presença?')) {
-        registros = registros.filter(r => r.id !== id);
-        salvarDados();
-        renderizarTudo();
-      }
-    }
+            // Initial UI Render
+            refreshDynamicOptions();
+            applyFilters();
+            renderUsersTable();
+        });
 
-    function limparTodosDados() {
-      if (confirm('ATENÇÃO: Isso apagará todos os registros salvos no navegador. Deseja continuar?')) {
-        registros = [];
-        salvarDados();
-        renderizarTudo();
-      }
-    }
-
-    // Autocompletar unção e ministério de pessoas já cadastradas anteriormente
-    function atualizarDatalistPessoas() {
-      const datalist = document.getElementById('lista-nomes-salvos');
-      const nomesUnicos = [...new Set(registros.map(r => r.nome))].sort();
-      datalist.innerHTML = nomesUnicos.map(nome => `<option value="${nome}">`).join('');
-    }
-
-    function autocompletarDadosPessoa(nomeDigitado) {
-      const encontrado = registros.find(r => r.nome.toLowerCase() === nomeDigitado.trim().toLowerCase());
-      if (encontrado) {
-        document.getElementById('input-uncao').value = encontrado.uncao;
-        document.getElementById('input-ministerio').value = encontrado.ministerio;
-      }
-    }
-
-    // ==========================================
-    // RENDERIZAÇÃO DA INTERFACE E TABELA
-    // ==========================================
-    function obterRegistrosFiltrados() {
-      const fData = document.getElementById('filtro-data').value;
-      const fUncao = document.getElementById('filtro-uncao').value;
-      const fMin = document.getElementById('filtro-ministerio').value.toLowerCase();
-      const fNome = document.getElementById('filtro-nome').value.toLowerCase();
-
-      return registros.filter(r => {
-        const matchData = !fData || r.data === fData;
-        const matchUncao = !fUncao || r.uncao === fUncao;
-        const matchMin = !fMin || r.ministerio.toLowerCase().includes(fMin);
-        const matchNome = !fNome || r.nome.toLowerCase().includes(fNome);
-        return matchData && matchUncao && matchMin && matchNome;
-      });
-    }
-
-    function limparFiltros() {
-      document.getElementById('filtro-data').value = '';
-      document.getElementById('filtro-uncao').value = '';
-      document.getElementById('filtro-ministerio').value = '';
-      document.getElementById('filtro-nome').value = '';
-      renderizarTudo();
-    }
-
-    function renderizarTudo() {
-      const filtrados = obterRegistrosFiltrados();
-      renderizarCardsUncao(filtrados);
-      renderizarTabela(filtrados);
-      atualizarDatalistPessoas();
-
-      if (!document.getElementById('aba-graficos').classList.contains('hidden')) {
-        atualizarGraficos();
-      }
-    }
-
-    function renderizarCardsUncao(lista) {
-      const container = document.getElementById('cards-uncao');
-      container.innerHTML = UNCOES_ORDEM.map(uncao => {
-        const qtd = lista.filter(r => r.uncao === uncao).length;
-        const cor = CORES_UNCAO[uncao] || '#475569';
-        return `
-          <div onclick="filtrarRapidoUncao('${uncao}')" class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm hover:border-blue-400 cursor-pointer transition">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-slate-500">${uncao}</span>
-              <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${cor}"></span>
-            </div>
-            <p class="text-xl font-bold text-slate-800 mt-1">${qtd}</p>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function filtrarRapidoUncao(uncao) {
-      const select = document.getElementById('filtro-uncao');
-      select.value = select.value === uncao ? '' : uncao;
-      renderizarTudo();
-    }
-
-    function renderizarTabela(lista) {
-      const tbody = document.getElementById('tabela-registros');
-      document.getElementById('contador-filtrado').textContent = lista.length;
-
-      if (lista.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" class="py-8 text-center text-slate-400 text-sm">
-              Nenhum registro encontrado para os filtros selecionados.
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      // Ordena da data mais recente para a mais antiga
-      const ordenados = [...lista].sort((a, b) => b.data.localeCompare(a.data) || b.id - a.id);
-
-      tbody.innerHTML = ordenados.map(r => {
-        const [ano, mes, dia] = r.data.split('-');
-        const dataFormatada = `${dia}/${mes}/${ano}`;
-        const cor = CORES_UNCAO[r.uncao] || '#475569';
-
-        return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">${dataFormatada}</td>
-            <td class="py-3 px-4 text-slate-600">${r.culto}</td>
-            <td class="py-3 px-4 font-semibold text-slate-800">${r.nome}</td>
-            <td class="py-3 px-4">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white" style="background-color: ${cor}">
-                ${r.uncao}
-              </span>
-            </td>
-            <td class="py-3 px-4 text-slate-600">${r.ministerio}</td>
-            <td class="py-3 px-4 text-right">
-              <button onclick="removerRegistro(${r.id})" title="Excluir" class="text-slate-400 hover:text-red-600 p-1 rounded transition">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      lucide.createIcons();
-    }
-
-    // ==========================================
-    // NAVEGAÇÃO ENTRE ABAS
-    // ==========================================
-    function mudarAba(aba) {
-      const secRegistro = document.getElementById('aba-registro');
-      const secGraficos = document.getElementById('aba-graficos');
-      const btnRegistro = document.getElementById('btn-tab-registro');
-      const btnGraficos = document.getElementById('btn-tab-graficos');
-
-      if (aba === 'registro') {
-        secRegistro.classList.remove('hidden');
-        secGraficos.classList.add('hidden');
-        btnRegistro.classList.add('tab-active');
-        btnRegistro.classList.remove('text-slate-500');
-        btnGraficos.classList.remove('tab-active');
-        btnGraficos.classList.add('text-slate-500');
-      } else {
-        secRegistro.classList.add('hidden');
-        secGraficos.classList.remove('hidden');
-        btnGraficos.classList.add('tab-active');
-        btnGraficos.classList.remove('text-slate-500');
-        btnRegistro.classList.remove('tab-active');
-        btnRegistro.classList.add('text-slate-500');
-        atualizarGraficos();
-      }
-    }
-
-    // ==========================================
-    // GRÁFICOS (DIA, SEMANA, MÊS, ANO, UNÇÃO, MINISTÉRIO)
-    // ==========================================
-    function alterarPeriodoGrafico(novoPeriodo) {
-      periodoAtual = novoPeriodo;
-      ['dia', 'semana', 'mes', 'ano'].forEach(p => {
-        const btn = document.getElementById(`btn-periodo-${p}`);
-        if (p === novoPeriodo) {
-          btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-md bg-white text-blue-600 shadow-sm transition';
-        } else {
-          btn.className = 'px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 hover:text-slate-900 transition';
+        function getLocalTodayISO() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            return new Date(now.getTime() - offset).toISOString().split('T')[0];
         }
-      });
-      atualizarGraficos();
-    }
 
-    // Calcula número da semana ISO no ano
-    function obterSemanaAno(dataStr) {
-      const [ano, mes, dia] = dataStr.split('-').map(Number);
-      const data = new Date(Date.UTC(ano, mes - 1, dia));
-      const diaSemana = data.getUTCDay() || 7;
-      data.setUTCDate(data.getUTCDate() + 4 - diaSemana);
-      const inicioAno = new Date(Date.UTC(data.getUTCFullYear(), 0, 1));
-      const semana = Math.ceil((((data - inicioAno) / 86400000) + 1) / 7);
-      return `${data.getUTCFullYear()}-S${String(semana).padStart(2, '0')}`;
-    }
+        // Sugestão inteligente do culto conforme o dia da semana
+        function suggestServiceByDate(dateStr) {
+            if (!dateStr) return;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            const dayOfWeek = dt.getDay(); // 0 = Dom, 1 = Seg, ..., 6 = Sáb
 
-    function atualizarGraficos() {
-      // KPIs Gerais
-      const totalPresencas = registros.length;
-      const cultosUnicos = new Set(registros.map(r => `${r.data}_${r.culto}`)).size;
-      const mediaCulto = cultosUnicos > 0 ? (totalPresencas / cultosUnicos).toFixed(1) : 0;
+            const mapByDay = {
+                0: 'Domingo - 18h',
+                1: 'Segunda-feira - 20h',
+                2: 'Terça-feira - 20h',
+                3: 'Quarta-feira - 20h',
+                4: 'Quinta-feira - 20h',
+                5: 'Sexta-feira - 20h',
+                6: 'Sábado - Evento'
+            };
 
-      document.getElementById('kpi-total-presencas').textContent = totalPresencas;
-      document.getElementById('kpi-total-cultos').textContent = cultosUnicos;
-      document.getElementById('kpi-media-culto').textContent = mediaCulto;
-
-      // 1. Dados do Gráfico Temporal
-      const filtroUncao = document.getElementById('grafico-filtro-uncao').value;
-      const baseTemporal = filtroUncao === 'TODOS'
-        ? registros
-        : registros.filter(r => r.uncao === filtroUncao);
-
-      const agrupado = {};
-      baseTemporal.forEach(r => {
-        let chave = r.data;
-        if (periodoAtual === 'semana') {
-          chave = obterSemanaAno(r.data);
-        } else if (periodoAtual === 'mes') {
-          chave = r.data.substring(0, 7); // YYYY-MM
-        } else if (periodoAtual === 'ano') {
-          chave = r.data.substring(0, 4); // YYYY
-        }
-        agrupado[chave] = (agrupado[chave] || 0) + 1;
-      });
-
-      const chavesOrdenadas = Object.keys(agrupado).sort();
-      const labelsFormatados = chavesOrdenadas.map(chave => {
-        if (periodoAtual === 'dia') {
-          const [a, m, d] = chave.split('-');
-          return `${d}/${m}/${a}`;
-        }
-        if (periodoAtual === 'mes') {
-          const [a, m] = chave.split('-');
-          return `${m}/${a}`;
-        }
-        if (periodoAtual === 'semana') {
-          const [a, s] = chave.split('-');
-          return `Sem ${s.replace('S', '')} (${a})`;
-        }
-        return chave;
-      });
-      const valoresTemporais = chavesOrdenadas.map(k => agrupado[k]);
-
-      if (chartTemporal) chartTemporal.destroy();
-      const ctxTemp = document.getElementById('chart-temporal').getContext('2d');
-      chartTemporal = new Chart(ctxTemp, {
-        type: 'bar',
-        data: {
-          labels: labelsFormatados,
-          datasets: [{
-            label: `Presenças (${filtroUncao === 'TODOS' ? 'Geral' : filtroUncao})`,
-            data: valoresTemporais,
-            backgroundColor: '#2563eb',
-            borderRadius: 6,
-            maxBarThickness: 48
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
+            const selectEl = document.getElementById('input-service');
+            if (selectEl && mapByDay[dayOfWeek]) {
+                selectEl.value = mapByDay[dayOfWeek];
             }
-          }
         }
-      });
 
-      // 2. Gráfico por Unção
-      const contagemUncao = UNCOES_ORDEM.map(u => registros.filter(r => r.uncao === u).length);
-      const coresUncaoArray = UNCOES_ORDEM.map(u => CORES_UNCAO[u]);
-
-      if (chartUncao) chartUncao.destroy();
-      const ctxUncao = document.getElementById('chart-uncao').getContext('2d');
-      chartUncao = new Chart(ctxUncao, {
-        type: 'doughnut',
-        data: {
-          labels: UNCOES_ORDEM,
-          datasets: [{
-            data: contagemUncao,
-            backgroundColor: coresUncaoArray,
-            borderWidth: 2,
-            borderColor: '#ffffff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'right' }
-          }
-        }
-      });
-
-      // 3. Gráfico por Ministério
-      const mapaMin = {};
-      registros.forEach(r => {
-        mapaMin[r.ministerio] = (mapaMin[r.ministerio] || 0) + 1;
-      });
-      const minOrdenados = Object.entries(mapaMin).sort((a, b) => b[1] - a[1]);
-
-      if (chartMinisterio) chartMinisterio.destroy();
-      const ctxMin = document.getElementById('chart-ministerio').getContext('2d');
-      chartMinisterio = new Chart(ctxMin, {
-        type: 'bar',
-        data: {
-          labels: minOrdenados.map(item => item[0]),
-          datasets: [{
-            label: 'Presenças',
-            data: minOrdenados.map(item => item[1]),
-            backgroundColor: '#0d9488',
-            borderRadius: 6
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            x: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
+        // ==========================================
+        // AUTHENTICATION & USER MANAGEMENT
+        // ==========================================
+        function loadUsers() {
+            try {
+                const raw = localStorage.getItem(USERS_STORAGE_KEY);
+                if (raw) {
+                    systemUsers = JSON.parse(raw);
+                }
+                if (!Array.isArray(systemUsers) || systemUsers.length === 0) {
+                    systemUsers = [
+                        {
+                            id: 'usr_default_admin',
+                            fullName: 'Administrador Geral',
+                            username: 'admin',
+                            password: '1234',
+                            role: 'Administrador'
+                        }
+                    ];
+                    saveUsers();
+                }
+            } catch (e) {
+                systemUsers = [{ id: 'usr_default_admin', fullName: 'Administrador Geral', username: 'admin', password: '1234', role: 'Administrador' }];
             }
-          }
         }
-      });
-    }
 
-    // ==========================================
-    // EXPORTAÇÃO E BACKUP (CSV & JSON)
-    // ==========================================
-    function exportarCSV() {
-      if (registros.length === 0) {
-        alert('Não há dados para exportar.');
-        return;
-      }
-      const cabecalho = ['Data', 'Culto', 'Nome', 'Uncao', 'Ministerio'];
-      const linhas = registros.map(r => [
-        r.data,
-        `"${r.culto}"`,
-        `"${r.nome}"`,
-        `"${r.uncao}"`,
-        `"${r.ministerio}"`
-      ].join(';'));
-
-      const csvContent = '\uFEFF' + [cabecalho.join(';'), ...linhas].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `presenca_igreja_${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
-    }
-
-    function exportarJSON() {
-      const blob = new Blob([JSON.stringify(registros, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `backup_igreja_${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-    }
-
-    function importarJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const dadosImportados = JSON.parse(e.target.result);
-          if (Array.isArray(dadosImportados)) {
-            registros = dadosImportados;
-            salvarDados();
-            renderizarTudo();
-            alert('Backup restaurado com sucesso!');
-          } else {
-            alert('Formato de arquivo inválido.');
-          }
-        } catch (err) {
-          alert('Erro ao ler o arquivo JSON.');
+        function saveUsers() {
+            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(systemUsers));
         }
-      };
-      reader.readAsText(file);
-    }
-  </script>
+
+        function checkSession() {
+            try {
+                const savedSession = sessionStorage.getItem(SESSION_STORAGE_KEY);
+                if (savedSession) {
+                    const userObj = JSON.parse(savedSession);
+                    const exists = systemUsers.find(u => u.username === userObj.username);
+                    if (exists) {
+                        currentUser = exists;
+                        showAppShell();
+                        return;
+                    }
+                }
+            } catch (e) {}
+            showLoginScreen();
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
+            const passwordInput = document.getElementById('login-password').value;
+            const errorBox = document.getElementById('login-error-msg');
+
+            const foundUser = systemUsers.find(u => u.username.toLowerCase() === usernameInput && u.password === passwordInput);
+
+            if (foundUser) {
+                errorBox.classList.add('hidden');
+                currentUser = foundUser;
+                sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ username: foundUser.username }));
+                document.getElementById('login-form').reset();
+                showAppShell();
+                showToast(`Bem-vindo(a), ${foundUser.fullName}!`, 'success');
+            } else {
+                errorBox.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            showLoginScreen();
+            showToast('Você saiu do sistema.', 'info');
+        }
+
+        function showLoginScreen() {
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('app-shell').classList.add('hidden');
+        }
+
+        function showAppShell() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+
+            if (currentUser) {
+                document.getElementById('header-user-name').textContent = currentUser.fullName;
+                document.getElementById('header-user-role').textContent = currentUser.role;
+            }
+            switchTab('lancamento');
+        }
+
+        function toggleLoginPassword() {
+            const pwdInput = document.getElementById('login-password');
+            const eyeIcon = document.getElementById('login-eye-icon');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.className = 'fa-solid fa-eye-slash text-sm';
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.className = 'fa-solid fa-eye text-sm';
+            }
+        }
+
+        function handleAddUser(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('new-user-fullname').value.trim();
+            const username = document.getElementById('new-user-username').value.trim().toLowerCase();
+            const password = document.getElementById('new-user-password').value;
+            const role = document.getElementById('new-user-role').value;
+
+            if (!fullName || !username || !password) return;
+
+            if (systemUsers.some(u => u.username.toLowerCase() === username)) {
+                showToast(`O usuário "${username}" já existe! Escolha outro login.`, 'warning');
+                return;
+            }
+
+            systemUsers.push({
+                id: 'usr_' + Date.now(),
+                fullName,
+                username,
+                password,
+                role
+            });
+
+            saveUsers();
+            renderUsersTable();
+            document.getElementById('user-form').reset();
+            showToast(`Usuário "${username}" criado com sucesso!`, 'success');
+        }
+
+        function deleteUser(id) {
+            const target = systemUsers.find(u => u.id === id);
+            if (!target) return;
+
+            const adminsCount = systemUsers.filter(u => u.role === 'Administrador').length;
+            if (target.role === 'Administrador' && adminsCount <= 1) {
+                showToast('Não é possível excluir o único Administrador do sistema.', 'error');
+                return;
+            }
+
+            openConfirmModal(
+                'Excluir Usuário',
+                `Deseja remover o acesso de "${target.fullName}" (${target.username})?`,
+                () => {
+                    systemUsers = systemUsers.filter(u => u.id !== id);
+                    saveUsers();
+                    renderUsersTable();
+                    showToast('Usuário removido.', 'info');
+                }
+            );
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            const badge = document.getElementById('users-count-badge');
+            badge.textContent = systemUsers.length;
+
+            tbody.innerHTML = systemUsers.map(u => {
+                const isAdmin = u.role === 'Administrador';
+                const isCurrent = currentUser && currentUser.username === u.username;
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3.5 px-5 font-semibold text-slate-800">
+                            ${escapeHTML(u.fullName)}
+                            ${isCurrent ? '<span class="ml-1.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-brand-100 text-brand-700">Você</span>' : ''}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">${escapeHTML(u.username)}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${isAdmin ? 'bg-brand-100 text-brand-800' : 'bg-slate-100 text-slate-700'}">
+                                ${escapeHTML(u.role)}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-5 text-right">
+                            <button onclick="deleteUser('${u.id}')" title="Excluir usuário" class="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // STORAGE & SAMPLE DATA
+        // ==========================================
+        function loadFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    attendanceRecords = JSON.parse(raw);
+                } else {
+                    attendanceRecords = generateSampleData();
+                    saveToStorage();
+                }
+            } catch (err) {
+                console.error('Erro ao carregar dados:', err);
+                attendanceRecords = [];
+            }
+        }
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(attendanceRecords));
+                const statusEl = document.getElementById('storage-status');
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Salvo automaticamente';
+            } catch (err) {
+                showToast('Erro ao salvar no navegador.', 'error');
+            }
+        }
+
+        function generateSampleData() {
+            const people = [
+                { name: 'Bispo Samuel Almeida', anointing: 'Bispo', ministry: 'Geral / Sem Ministério' },
+                { name: 'Pastor Marcos Vinícius', anointing: 'Pastor', ministry: 'Ensino / EBD' },
+                { name: 'Pastora Helena Costa', anointing: 'Pastor', ministry: 'Intercessão' },
+                { name: 'Presb. Carlos Eduardo', anointing: 'Presbítero', ministry: 'Casais' },
+                { name: 'Presb. Roberto Silva', anointing: 'Presbítero', ministry: 'Evangelismo' },
+                { name: 'Diác. Anderson Souza', anointing: 'Diácono', ministry: 'Diaconia' },
+                { name: 'Diác. Fernanda Lima', anointing: 'Diácono', ministry: 'Recepção' },
+                { name: 'Diác. Paulo Henrique', anointing: 'Diácono', ministry: 'Diaconia' },
+                { name: 'Asp. Lucas Martins', anointing: 'Aspirante', ministry: 'Jovens' },
+                { name: 'Asp. Juliana Rocha', anointing: 'Aspirante', ministry: 'Louvor' },
+                { name: 'Ofic. Tiago Mendes', anointing: 'Oficial', ministry: 'Mídia e Som' },
+                { name: 'Ofic. Beatriz Santos', anointing: 'Oficial', ministry: 'Infantil' },
+                { name: 'Mariana Oliveira', anointing: 'Membro', ministry: 'Louvor' },
+                { name: 'Gabriel Ferreira', anointing: 'Membro', ministry: 'Jovens' },
+                { name: 'Patrícia Gomes', anointing: 'Membro', ministry: 'Infantil' },
+                { name: 'João Pedro Alves', anointing: 'Membro', ministry: 'Mídia e Som' },
+                { name: 'Camila Rodrigues', anointing: 'Membro', ministry: 'Recepção' },
+                { name: 'Rafael Barbosa', anointing: 'Membro', ministry: 'Evangelismo' },
+                { name: 'Ana Clara Ribeiro', anointing: 'Membro', ministry: 'Louvor' },
+                { name: 'Ricardo Nogueira', anointing: 'Membro', ministry: 'Casais' },
+                { name: 'Sônia Pereira', anointing: 'Membro', ministry: 'Intercessão' },
+                { name: 'Daniela Castro', anointing: 'Visitante', ministry: 'Geral / Sem Ministério' }
+            ];
+
+            const today = new Date();
+            const formatOffsetDate = (daysAgo) => {
+                const d = new Date(today);
+                d.setDate(d.getDate() - daysAgo);
+                const offset = d.getTimezoneOffset() * 60000;
+                return new Date(d.getTime() - offset).toISOString().split('T')[0];
+            };
+
+            const servicesSchedule = [
+                { daysAgo: 0,   service: 'Domingo - 18h',       count: 20 },
+                { daysAgo: 0,   service: 'Domingo - 10h',       count: 15 },
+                { daysAgo: 1,   service: 'Sábado - Evento',     count: 18 },
+                { daysAgo: 3,   service: 'Quinta-feira - 20h',  count: 14 },
+                { daysAgo: 5,   service: 'Terça-feira - 20h',   count: 12 },
+                { daysAgo: 7,   service: 'Domingo - 18h',       count: 22 },
+                { daysAgo: 7,   service: 'Domingo - 08h',       count: 10 },
+                { daysAgo: 14,  service: 'Domingo - 16h',       count: 16 },
+                { daysAgo: 35,  service: 'Quarta-feira - 20h',  count: 15 },
+                { daysAgo: 68,  service: 'Sexta-feira - 20h',   count: 17 },
+                { daysAgo: 370, service: 'Domingo - 18h',       count: 14 }
+            ];
+
+            const generated = [];
+            let idCounter = 1;
+
+            servicesSchedule.forEach(slot => {
+                const dateStr = formatOffsetDate(slot.daysAgo);
+                const subset = people.slice(0, slot.count);
+                subset.forEach(p => {
+                    generated.push({
+                        id: 'rec_' + (idCounter++) + '_' + Math.random().toString(36).substr(2, 5),
+                        date: dateStr,
+                        service: slot.service,
+                        name: p.name,
+                        anointing: p.anointing,
+                        ministry: p.ministry
+                    });
+                });
+            });
+
+            return generated;
+        }
+
+        // ==========================================
+        // CRUD OPERATIONS
+        // ==========================================
+        function handleAddRecord(e) {
+            e.preventDefault();
+
+            const date = document.getElementById('input-date').value;
+            const service = document.getElementById('input-service').value;
+            const name = document.getElementById('input-name').value.trim();
+            const anointing = document.getElementById('input-anointing').value;
+            const ministry = document.getElementById('input-ministry').value.trim() || 'Geral / Sem Ministério';
+
+            if (!date || !name) {
+                showToast('Preencha a data e o nome da pessoa.', 'error');
+                return;
+            }
+
+            const duplicate = attendanceRecords.some(r => 
+                r.date === date && 
+                r.service.toLowerCase() === service.toLowerCase() && 
+                r.name.toLowerCase() === name.toLowerCase()
+            );
+
+            if (duplicate) {
+                showToast(`${name} já está registrado(a) neste culto e data!`, 'warning');
+                return;
+            }
+
+            const newRecord = {
+                id: 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                date,
+                service,
+                name,
+                anointing,
+                ministry
+            };
+
+            attendanceRecords.unshift(newRecord);
+            saveToStorage();
+
+            const nameInput = document.getElementById('input-name');
+            nameInput.value = '';
+            nameInput.focus();
+
+            refreshDynamicOptions();
+            applyFilters();
+            if (currentTab === 'graficos') updateAllCharts();
+
+            showToast(`Presença de ${name} (${anointing}) registrada!`, 'success');
+        }
+
+        function handleNameAutoFill(e) {
+            const val = e.target.value.trim().toLowerCase();
+            if (val.length < 3) return;
+
+            const match = attendanceRecords.find(r => r.name.toLowerCase() === val);
+            if (match) {
+                document.getElementById('input-anointing').value = match.anointing;
+                document.getElementById('input-ministry').value = match.ministry;
+            }
+        }
+
+        function openEditModal(id) {
+            const rec = attendanceRecords.find(r => r.id === id);
+            if (!rec) return;
+
+            document.getElementById('edit-id').value = rec.id;
+            document.getElementById('edit-date').value = rec.date;
+            
+            const editService = document.getElementById('edit-service');
+            if (!Array.from(editService.options).some(o => o.value === rec.service)) {
+                const opt = document.createElement('option');
+                opt.value = rec.service;
+                opt.textContent = rec.service;
+                editService.appendChild(opt);
+            }
+            editService.value = rec.service;
+
+            document.getElementById('edit-name').value = rec.name;
+            document.getElementById('edit-anointing').value = rec.anointing;
+            document.getElementById('edit-ministry').value = rec.ministry;
+
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        function handleSaveEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const idx = attendanceRecords.findIndex(r => r.id === id);
+            if (idx === -1) return;
+
+            attendanceRecords[idx] = {
+                ...attendanceRecords[idx],
+                date: document.getElementById('edit-date').value,
+                service: document.getElementById('edit-service').value,
+                name: document.getElementById('edit-name').value.trim(),
+                anointing: document.getElementById('edit-anointing').value,
+                ministry: document.getElementById('edit-ministry').value.trim() || 'Geral / Sem Ministério'
+            };
+
+            saveToStorage();
+            closeEditModal();
+            refreshDynamicOptions();
+            applyFilters();
+            if (currentTab === 'graficos') updateAllCharts();
+            showToast('Registro atualizado com sucesso!', 'success');
+        }
+
+        function deleteRecord(id) {
+            const rec = attendanceRecords.find(r => r.id === id);
+            if (!rec) return;
+
+            openConfirmModal(
+                'Excluir Registro',
+                `Deseja remover a presença de "${rec.name}" do dia ${formatDateBR(rec.date)}?`,
+                () => {
+                    attendanceRecords = attendanceRecords.filter(r => r.id !== id);
+                    saveToStorage();
+                    refreshDynamicOptions();
+                    applyFilters();
+                    if (currentTab === 'graficos') updateAllCharts();
+                    showToast('Registro removido.', 'info');
+                }
+            );
+        }
+
+        function clearAllDataPrompt() {
+            openConfirmModal(
+                'Apagar Todos os Dados',
+                'Atenção! Isso apagará permanentemente todo o histórico de presenças salvo neste navegador. Recomendamos fazer um Backup JSON antes.',
+                () => {
+                    attendanceRecords = [];
+                    saveToStorage();
+                    refreshDynamicOptions();
+                    applyFilters();
+                    if (currentTab === 'graficos') updateAllCharts();
+                    showToast('Todos os registros foram apagados.', 'info');
+                }
+            );
+        }
+
+        function loadSampleDataPrompt() {
+            openConfirmModal(
+                'Carregar Dados de Exemplo',
+                'Isso substituirá os registros atuais por dados de demonstração com os horários oficiais de culto. Deseja continuar?',
+                () => {
+                    attendanceRecords = generateSampleData();
+                    saveToStorage();
+                    refreshDynamicOptions();
+                    applyFilters();
+                    if (currentTab === 'graficos') updateAllCharts();
+                    showToast('Dados de exemplo carregados!', 'success');
+                }
+            );
+        }
+
+        // ==========================================
+        // FILTERING & RENDERING TABLE + KPIs
+        // ==========================================
+        function refreshDynamicOptions() {
+            const namesSet = new Set();
+            const servicesSet = new Set(SERVICE_SCHEDULE_OPTIONS);
+            const ministriesSet = new Set(['Geral / Sem Ministério', 'Louvor', 'Infantil', 'Jovens', 'Casais', 'Intercessão', 'Diaconia', 'Recepção', 'Mídia e Som', 'Ensino / EBD', 'Evangelismo']);
+
+            attendanceRecords.forEach(r => {
+                if (r.name) namesSet.add(r.name);
+                if (r.service) servicesSet.add(r.service);
+                if (r.ministry) ministriesSet.add(r.ministry);
+            });
+
+            // Names Datalist
+            const namesList = document.getElementById('names-list');
+            namesList.innerHTML = Array.from(namesSet).sort().map(n => `<option value="${escapeHTML(n)}">`).join('');
+
+            // Filter Service Select
+            const filterService = document.getElementById('filter-service');
+            const currentServiceVal = filterService.value;
+            filterService.innerHTML = '<option value="">Todos os Cultos</option>' +
+                Array.from(servicesSet).map(s => `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`).join('');
+            filterService.value = currentServiceVal;
+
+            // Filter Ministry Select
+            const filterMinistry = document.getElementById('filter-ministry');
+            const currentMinistryVal = filterMinistry.value;
+            filterMinistry.innerHTML = '<option value="">Todos os Ministérios</option>' +
+                Array.from(ministriesSet).sort().map(m => `<option value="${escapeHTML(m)}">${escapeHTML(m)}</option>`).join('');
+            filterMinistry.value = currentMinistryVal;
+        }
+
+        function quickFilterAnointing(anointing) {
+            if (currentTab !== 'lancamento') switchTab('lancamento');
+            const select = document.getElementById('filter-anointing');
+            select.value = select.value === anointing ? '' : anointing;
+            applyFilters();
+        }
+
+        function getFilteredRecords() {
+            const search = document.getElementById('filter-search').value.trim().toLowerCase();
+            const date = document.getElementById('filter-date').value;
+            const service = document.getElementById('filter-service').value;
+            const anointing = document.getElementById('filter-anointing').value;
+            const ministry = document.getElementById('filter-ministry').value;
+
+            return attendanceRecords.filter(r => {
+                if (search && !r.name.toLowerCase().includes(search)) return false;
+                if (date && r.date !== date) return false;
+                if (service && r.service !== service) return false;
+                if (anointing && r.anointing !== anointing) return false;
+                if (ministry && r.ministry !== ministry) return false;
+                return true;
+            }).sort((a, b) => b.date.localeCompare(a.date));
+        }
+
+        function clearDateFilter() {
+            document.getElementById('filter-date').value = '';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const filtered = getFilteredRecords();
+            updateKPIs(filtered);
+            renderTable(filtered);
+        }
+
+        function updateKPIs(records) {
+            document.getElementById('kpi-total').textContent = records.length;
+            document.getElementById('records-count-badge').textContent = records.length;
+
+            const uniqueCultos = new Set(records.map(r => `${r.date}_${r.service}`)).size;
+            const avg = uniqueCultos > 0 ? (records.length / uniqueCultos).toFixed(1) : '0';
+            document.getElementById('kpi-avg').textContent = `Média: ${avg} por culto (${uniqueCultos} ${uniqueCultos === 1 ? 'culto' : 'cultos'})`;
+
+            const counts = {
+                'Bispo': 0, 'Pastor': 0, 'Presbítero': 0, 'Diácono': 0,
+                'Aspirante': 0, 'Oficial': 0, 'Membro': 0, 'Visitante': 0
+            };
+            records.forEach(r => {
+                if (counts[r.anointing] !== undefined) counts[r.anointing]++;
+            });
+
+            document.getElementById('kpi-Bispo').textContent = counts['Bispo'];
+            document.getElementById('kpi-Pastor').textContent = counts['Pastor'];
+            document.getElementById('kpi-Presbítero').textContent = counts['Presbítero'];
+            document.getElementById('kpi-Diácono').textContent = counts['Diácono'];
+
+            const aspOfic = counts['Aspirante'] + counts['Oficial'];
+            document.getElementById('kpi-Aspirante-Oficial').textContent = aspOfic;
+            document.getElementById('kpi-Aspirante-Oficial-detail').textContent = `(${counts['Aspirante']}A / ${counts['Oficial']}O)`;
+
+            const memVis = counts['Membro'] + counts['Visitante'];
+            document.getElementById('kpi-Membro-Total').textContent = memVis;
+            document.getElementById('kpi-Membro-detail').textContent = `(${counts['Membro']}M / ${counts['Visitante']}V)`;
+        }
+
+        function renderTable(records) {
+            const tbody = document.getElementById('attendance-table-body');
+            const emptyState = document.getElementById('empty-state');
+
+            if (records.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            tbody.innerHTML = records.map(rec => {
+                const style = ANOINTING_STYLES[rec.anointing] || ANOINTING_STYLES['Membro'];
+                return `
+                    <tr class="hover:bg-slate-50/90 transition group">
+                        <td class="py-3.5 px-5 whitespace-nowrap font-medium text-slate-900">
+                            ${formatDateBR(rec.date)}
+                        </td>
+                        <td class="py-3.5 px-4 whitespace-nowrap text-slate-600 font-medium">
+                            ${escapeHTML(rec.service)}
+                        </td>
+                        <td class="py-3.5 px-4 font-semibold text-slate-800">
+                            ${escapeHTML(rec.name)}
+                        </td>
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${style.badge}">
+                                ${escapeHTML(rec.anointing)}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 whitespace-nowrap text-slate-600">
+                            <span class="inline-flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-brand-600"></span>
+                                ${escapeHTML(rec.ministry)}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-5 whitespace-nowrap text-right">
+                            <div class="inline-flex items-center gap-1">
+                                <button onclick="openEditModal('${rec.id}')" title="Editar" class="p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteRecord('${rec.id}')" title="Excluir" class="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // NAVIGATION TABS
+        // ==========================================
+        function switchTab(tab) {
+            currentTab = tab;
+            const tabs = ['lancamento', 'graficos', 'usuarios'];
+
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const view = document.getElementById(`view-${t}`);
+
+                if (t === tab) {
+                    btn.className = 'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-brand-600 shadow-sm';
+                    view.classList.remove('hidden');
+                } else {
+                    btn.className = 'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-brand-100 hover:text-white';
+                    view.classList.add('hidden');
+                }
+            });
+
+            // Oculta cards de KPI na aba de Usuários para manter foco na gestão de acesso
+            const kpiSection = document.getElementById('kpi-section');
+            if (tab === 'usuarios') {
+                kpiSection.classList.add('hidden');
+                renderUsersTable();
+            } else {
+                kpiSection.classList.remove('hidden');
+            }
+
+            if (tab === 'graficos') {
+                updateAllCharts();
+            }
+        }
+
+        // ==========================================
+        // CHARTS LOGIC (DAY, WEEK, MONTH, YEAR + ANOINTING + MINISTRY)
+        // ==========================================
+        function setChartPeriod(period) {
+            chartPeriod = period;
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.className = 'period-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-brand-600';
+            });
+            document.getElementById(`period-btn-${period}`).className = 'period-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-brand-600 text-white shadow-sm';
+            renderTemporalChart();
+        }
+
+        function setChartType(type) {
+            chartType = type;
+            const barBtn = document.getElementById('type-btn-bar');
+            const lineBtn = document.getElementById('type-btn-line');
+
+            if (type === 'bar') {
+                barBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-brand-600 shadow-sm';
+                lineBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-brand-600';
+            } else {
+                lineBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-brand-600 shadow-sm';
+                barBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-brand-600';
+            }
+            renderTemporalChart();
+        }
+
+        function updateAllCharts() {
+            renderTemporalChart();
+            renderAnointingChart();
+            renderMinistryChart();
+        }
+
+        function getChartBaseRecords() {
+            const anointingFilter = document.getElementById('chart-anointing-filter').value;
+            if (anointingFilter === 'ALL') return attendanceRecords;
+            return attendanceRecords.filter(r => r.anointing === anointingFilter);
+        }
+
+        function getISOWeekInfo(dateStr) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const date = new Date(Date.UTC(y, m - 1, d));
+            const dayNum = date.getUTCDay() || 7;
+            date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+            return {
+                year: date.getUTCFullYear(),
+                week: weekNo,
+                key: `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`,
+                label: `Sem ${String(weekNo).padStart(2, '0')}/${date.getUTCFullYear()}`
+            };
+        }
+
+        function renderTemporalChart() {
+            const ctx = document.getElementById('temporalChart').getContext('2d');
+            const records = getChartBaseRecords();
+
+            const groupedMap = new Map();
+            const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
+            const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+            sorted.forEach(r => {
+                let key = '';
+                let label = '';
+
+                if (chartPeriod === 'day') {
+                    key = r.date;
+                    label = formatDateBR(r.date);
+                } else if (chartPeriod === 'week') {
+                    const info = getISOWeekInfo(r.date);
+                    key = info.key;
+                    label = info.label;
+                } else if (chartPeriod === 'month') {
+                    const [y, m] = r.date.split('-');
+                    key = `${y}-${m}`;
+                    label = `${monthNames[parseInt(m, 10) - 1]}/${y}`;
+                } else if (chartPeriod === 'year') {
+                    const [y] = r.date.split('-');
+                    key = y;
+                    label = y;
+                }
+
+                if (!groupedMap.has(key)) {
+                    groupedMap.set(key, { label, count: 0 });
+                }
+                groupedMap.get(key).count += 1;
+            });
+
+            const labels = Array.from(groupedMap.values()).map(item => item.label);
+            const data = Array.from(groupedMap.values()).map(item => item.count);
+
+            if (temporalChartInstance) {
+                temporalChartInstance.destroy();
+            }
+
+            const periodTitles = {
+                day: 'Presenças por Dia de Culto',
+                week: 'Presenças Agrupadas por Semana',
+                month: 'Presenças Agrupadas por Mês',
+                year: 'Presenças Agrupadas por Ano'
+            };
+
+            temporalChartInstance = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels,
+                    datasets: [{
+                        label: periodTitles[chartPeriod],
+                        data,
+                        backgroundColor: chartType === 'bar' ? '#1849C6' : 'rgba(24, 73, 198, 0.16)',
+                        borderColor: '#1849C6',
+                        borderWidth: 2,
+                        borderRadius: chartType === 'bar' ? 8 : 0,
+                        fill: chartType === 'line',
+                        tension: 0.35,
+                        pointBackgroundColor: '#1849C6',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { font: { family: 'Inter', weight: '600' } }
+                        },
+                        tooltip: {
+                            backgroundColor: '#143ba3',
+                            padding: 12,
+                            cornerRadius: 10,
+                            callbacks: {
+                                label: (context) => ` Total: ${context.parsed.y} ${context.parsed.y === 1 ? 'pessoa' : 'pessoas'}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                font: { family: 'Inter' }
+                            },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            ticks: { font: { family: 'Inter' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderAnointingChart() {
+            const ctx = document.getElementById('anointingChart').getContext('2d');
+            const counts = ANOINTING_ORDER.map(role => 
+                attendanceRecords.filter(r => r.anointing === role).length
+            );
+            const colors = ANOINTING_ORDER.map(role => ANOINTING_STYLES[role].color);
+
+            if (anointingChartInstance) {
+                anointingChartInstance.destroy();
+            }
+
+            anointingChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ANOINTING_ORDER,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '58%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 14,
+                                font: { family: 'Inter', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#143ba3',
+                            padding: 10,
+                            cornerRadius: 8
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderMinistryChart() {
+            const ctx = document.getElementById('ministryChart').getContext('2d');
+            const records = getChartBaseRecords();
+
+            const minCounts = {};
+            records.forEach(r => {
+                const m = r.ministry || 'Geral / Sem Ministério';
+                minCounts[m] = (minCounts[m] || 0) + 1;
+            });
+
+            const sortedEntries = Object.entries(minCounts).sort((a, b) => b[1] - a[1]);
+            const labels = sortedEntries.map(e => e[0]);
+            const data = sortedEntries.map(e => e[1]);
+
+            if (ministryChartInstance) {
+                ministryChartInstance.destroy();
+            }
+
+            ministryChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Presenças por Ministério',
+                        data,
+                        backgroundColor: '#2f68f6',
+                        borderColor: '#1849C6',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#143ba3',
+                            padding: 10,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, font: { family: 'Inter' } },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        y: {
+                            ticks: { font: { family: 'Inter', size: 11 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // EXPORT CSV & BACKUP JSON
+        // ==========================================
+        function exportToCSV() {
+            const records = getFilteredRecords();
+            if (records.length === 0) {
+                showToast('Não há registros para exportar.', 'warning');
+                return;
+            }
+
+            const BOM = '\uFEFF';
+            const headers = ['Data', 'Culto / Horário', 'Nome', 'Unção', 'Ministério'];
+            const rows = records.map(r => [
+                formatDateBR(r.date),
+                `"${r.service.replace(/"/g, '""')}"`,
+                `"${r.name.replace(/"/g, '""')}"`,
+                `"${r.anointing.replace(/"/g, '""')}"`,
+                `"${r.ministry.replace(/"/g, '""')}"`
+            ]);
+
+            const csvContent = BOM + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `presenca_cultos_${getLocalTodayISO()}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('Arquivo CSV exportado com sucesso!', 'success');
+        }
+
+        function exportBackupJSON() {
+            if (attendanceRecords.length === 0) {
+                showToast('Nenhum dado para fazer backup.', 'warning');
+                return;
+            }
+            const dataStr = JSON.stringify(attendanceRecords, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `backup_igreja_${getLocalTodayISO()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('Backup JSON baixado!', 'success');
+        }
+
+        function importBackupJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) throw new Error('Formato inválido');
+
+                    const valid = imported.filter(item => item.date && item.name && item.anointing);
+                    if (valid.length === 0) throw new Error('Nenhum registro válido encontrado');
+
+                    attendanceRecords = valid.map((item, idx) => ({
+                        id: item.id || ('imp_' + Date.now() + '_' + idx),
+                        date: item.date,
+                        service: item.service || 'Domingo - 18h',
+                        name: item.name,
+                        anointing: item.anointing,
+                        ministry: item.ministry || 'Geral / Sem Ministério'
+                    }));
+
+                    saveToStorage();
+                    refreshDynamicOptions();
+                    applyFilters();
+                    if (currentTab === 'graficos') updateAllCharts();
+                    showToast(`${attendanceRecords.length} registros restaurados com sucesso!`, 'success');
+                } catch (err) {
+                    showToast('Erro ao ler arquivo JSON. Verifique se é um backup válido.', 'error');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // ==========================================
+        // UI HELPERS (TOASTS, MODALS, FORMATTING)
+        // ==========================================
+        function formatDateBR(isoDate) {
+            if (!isoDate) return '';
+            const [y, m, d] = isoDate.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const styles = {
+                success: 'bg-brand-900 text-white border-l-4 border-emerald-400',
+                error:   'bg-red-900 text-white border-l-4 border-red-400',
+                warning: 'bg-amber-900 text-white border-l-4 border-amber-400',
+                info:    'bg-slate-800 text-white border-l-4 border-brand-400'
+            };
+
+            const icons = {
+                success: 'fa-circle-check text-emerald-400',
+                error:   'fa-circle-xmark text-red-400',
+                warning: 'fa-triangle-exclamation text-amber-400',
+                info:    'fa-circle-info text-brand-400'
+            };
+
+            toast.className = `${styles[type]} px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${escapeHTML(message)}</span>`;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        function openConfirmModal(title, message, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            okBtn.onclick = () => {
+                cleanup();
+                onConfirm();
+            };
+            cancelBtn.onclick = cleanup;
+
+            modal.classList.remove('hidden');
+        }
+    </script>
 </body>
 </html>
